@@ -1,0 +1,35 @@
+import pandas as pd
+
+# 🔹 设定固定成本参数
+total_salary = 10000  # 每月员工工资 (£)
+storage_cost_per_m3_per_day = 5   # 仓储单价 (£/m³/天)
+order_handling_cost_per_item = 1.5  # 订单处理费 (£/件)
+base_shipping_cost = 2  # 运输基础费用 (£)
+shipping_cost_per_kg = 0.5  # 运输单位费用 (£/kg)
+
+# 🔹 读取 Excel 文件
+file_path = "inventory_data.xlsx"
+df = pd.read_excel(file_path)
+
+# 🔹 计算仓储成本
+df["仓储成本 (£)"] = df["存储体积 (m³)"] * df["存储天数"] * storage_cost_per_m3_per_day
+
+# 🔹 计算订单处理成本
+df["订单处理成本 (£)"] = df["订单商品数量"] * order_handling_cost_per_item
+
+# 🔹 计算运输成本
+df["运输成本 (£)"] = base_shipping_cost + (df["货物重量 (kg)"] * shipping_cost_per_kg)
+
+# 🔹 计算工资分摊（按订单数量）
+total_orders = len(df)  # 订单总数
+df["工资成本-按订单分摊 (£)"] = total_salary / total_orders
+
+# 🔹 计算总订单成本
+df["总订单成本 (£)"] = df["仓储成本 (£)"] + df["订单处理成本 (£)"] + df["运输成本 (£)"] + df["工资成本-按订单分摊 (£)"]
+
+# 🔹 输出结果
+print(df)
+
+# 🔹 保存到 Excel 方便分析
+df.to_excel("仓储与发货成本计算.xlsx", index=False)
+print("✅ 计算结果已保存到 Excel！")
