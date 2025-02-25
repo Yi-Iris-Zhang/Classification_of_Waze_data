@@ -1,0 +1,140 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# ------------------------------
+# Configuration (Customizable)
+# ------------------------------
+params = {
+    # Inventory parameters
+    "avg_inventory": 1000,       # Average inventory (units)
+    "product_price": 50,         # Product unit price (USD/unit)
+    "holding_rate": 0.25,        # Annual holding cost rate
+    
+    # Fixed storage costs (USD/month)
+    "rent": 10000,               # Warehouse rent/depreciation
+    "equipment": 2000,           # Equipment maintenance
+    "fixed_labor_storage": 8000, # Fixed labor
+    
+    # Variable storage costs (USD/month)
+    "insurance": 500,            # Insurance
+    "shrinkage": 300,            # Inventory shrinkage
+    
+    # Shipping parameters
+    "order_volume": 1000,        # Monthly orders
+    "package_cost_per_order": 3, # Packaging cost per order
+    "base_shipping": 10,         # Base shipping fee per order
+    "shipping_per_kg": 2,        # Shipping cost per kg
+    "avg_weight_per_order": 5,   # Average weight per order (kg)
+    "labor_cost_per_order": 5,   # Labor cost per order
+    
+    # Fixed shipping costs (USD/month)
+    "software_cost": 1000,       # Information system
+    "fixed_labor_shipping": 5000 # Fixed labor
+}
+
+# ------------------------------
+# Core Calculation Functions
+# ------------------------------
+def calculate_storage_cost(params):
+    """Calculate storage costs"""
+    fixed = params["rent"] + params["equipment"] + params["fixed_labor_storage"]
+    
+    holding_cost_monthly = (
+        params["avg_inventory"] 
+        * params["product_price"] 
+        * params["holding_rate"] / 12
+    )
+    variable = holding_cost_monthly + params["insurance"] + params["shrinkage"]
+    
+    return {"fixed": fixed, "variable": variable}
+
+def calculate_shipping_cost(params):
+    """Calculate shipping costs"""
+    fixed = params["software_cost"] + params["fixed_labor_shipping"]
+    
+    shipping_per_order = (
+        params["base_shipping"] 
+        + params["shipping_per_kg"] * params["avg_weight_per_order"]
+    )
+    variable_per_order = (
+        params["package_cost_per_order"] 
+        + shipping_per_order 
+        + params["labor_cost_per_order"]
+    )
+    variable_total = variable_per_order * params["order_volume"]
+    
+    return {"fixed": fixed, "variable": variable_total}
+
+def total_cost(params):
+    """Calculate total costs"""
+    storage = calculate_storage_cost(params)
+    shipping = calculate_shipping_cost(params)
+    total = (
+        storage["fixed"] + storage["variable"] 
+        + shipping["fixed"] + shipping["variable"]
+    )
+    return {
+        "storage_fixed": storage["fixed"],
+        "storage_variable": storage["variable"],
+        "shipping_fixed": shipping["fixed"],
+        "shipping_variable": shipping["variable"],
+        "total_cost": total
+    }
+
+# ------------------------------
+# Execution & Output
+# ------------------------------
+results = total_cost(params)
+
+print("\n【Monthly Cost Report】")
+print(f"Total Storage Cost: ${results['storage_fixed'] + results['storage_variable']:,.2f}")
+print(f"  Fixed Costs: ${results['storage_fixed']:,}")
+print(f"  Variable Costs: ${results['storage_variable']:,.2f}")
+print(f"Total Shipping Cost: ${results['shipping_fixed'] + results['shipping_variable']:,.2f}")
+print(f"  Fixed Costs: ${results['shipping_fixed']:,}")
+print(f"  Variable Costs: ${results['shipping_variable']:,.2f}")
+print(f"\nTotal Operational Cost: ${results['total_cost']:,.2f}")
+
+# ------------------------------
+# Visualization (English Labels)
+# ------------------------------
+# Configure fonts for macOS
+plt.rcParams['font.family'] = 'Arial'  # Use system default sans-serif
+plt.rcParams['axes.unicode_minus'] = False
+
+# Cost Structure Pie Chart
+labels = ['Storage Fixed', 'Storage Variable', 'Shipping Fixed', 'Shipping Variable']
+sizes = [
+    results["storage_fixed"],
+    results["storage_variable"],
+    results["shipping_fixed"],
+    results["shipping_variable"]
+]
+
+plt.figure(figsize=(8, 6))
+plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90,
+        colors=['#ff9999','#66b3ff','#99ff99','#ffcc99'])
+plt.title("Cost Structure Analysis", pad=20)
+plt.tight_layout()
+plt.show()
+
+# Scenario Analysis: Order Volume Impact
+order_scenarios = np.arange(500, 1501, 100)
+total_costs = []
+
+for order in order_scenarios:
+    modified_params = params.copy()
+    modified_params["order_volume"] = order
+    cost = total_cost(modified_params)["total_cost"]
+    total_costs.append(cost)
+
+plt.figure(figsize=(10, 6))
+plt.plot(order_scenarios, total_costs, marker='o', linestyle='--', color='#2c7bb6')
+plt.xlabel("Monthly Order Volume", fontsize=12)
+plt.ylabel("Total Cost (USD)", fontsize=12)
+plt.title("Impact of Order Volume on Total Costs", fontsize=14, pad=20)
+plt.xticks(np.arange(500, 1600, 200))
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
