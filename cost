@@ -32,4 +32,4 @@ print(df)
 
 # 🔹 保存到 Excel 方便分析
 df.to_excel("仓储与发货成本计算.xlsx", index=False)
-print("✅ 计算结果已保存到 Excel！")
+print("计算结果已保存到 Excel！")
